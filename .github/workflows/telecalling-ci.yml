@@ -3,15 +3,19 @@ on:
   push:
     paths:
       - "telecalling-agent/**"
+      - ".github/workflows/telecalling-ci.yml"
   pull_request:
     paths:
       - "telecalling-agent/**"
+      - ".github/workflows/telecalling-ci.yml"
 jobs:
   tests:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: telecalling-agent
+    env:
+      PYTHONPATH: .
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,4 +25,4 @@ jobs:
           cache-dependency-path: telecalling-agent/requirements.txt
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt
-      - run: pytest -q
+      - run: python -m pytest -q tests
