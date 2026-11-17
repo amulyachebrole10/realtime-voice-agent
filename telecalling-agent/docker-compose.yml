@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8020:8000"
-      - "9092:9092"
+      - "9092:9092/tcp"
     env_file:
       - .env
     environment:
@@ -14,6 +14,7 @@ services:
       WHISPER_MODEL: tiny
       PIPER_MODEL: /models/en_US-lessac-medium.onnx
       ASTERISK_SPOOL: /var/spool/asterisk/outgoing
+      AUDIO_SOCKET_HOST: voice-agent
     volumes:
       - ./models:/models:ro
       - ./data:/app/data
@@ -26,7 +27,9 @@ services:
     build:
       context: ./asterisk
       dockerfile: Dockerfile
-    network_mode: host
+    ports:
+      - "5060:5060/udp"
+      - "10000-10100:10000-10100/udp"
     volumes:
       - ./asterisk/etc/asterisk:/etc/asterisk:ro
       - ./asterisk-spool:/var/spool/asterisk/outgoing
