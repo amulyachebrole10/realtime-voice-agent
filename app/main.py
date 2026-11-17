@@ -3,10 +3,11 @@ import tempfile
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 from pydantic import BaseModel, Field
 from app.local_voice import LocalVoiceEngine
 
-app = FastAPI(title="Local Voice Agent", version="0.2.0")
+app = FastAPI(title="Local Voice Agent", version="0.2.1")
 voice = LocalVoiceEngine()
 sessions: dict[str, list[dict[str, str]]] = {}
 
@@ -58,7 +59,8 @@ def synthesize_audio(request: SynthesisRequest):
         fd, temp_path = tempfile.mkstemp(suffix=".wav")
         os.close(fd)
         voice.synthesize(request.text, temp_path)
-        return FileResponse(temp_path, media_type="audio/wav", filename="speech.wav", background=None)
+        return FileResponse(temp_path, media_type="audio/wav", filename="speech.wav",
+                            background=BackgroundTask(os.remove, temp_path))
     except Exception as exc:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
@@ -82,7 +84,8 @@ async def voice_turn(session_id: str, file: UploadFile = File(...)):
         voice.synthesize(answer, output_path)
         history.extend([{"role": "user", "content": transcript["text"]}, {"role": "assistant", "content": answer}])
         return FileResponse(output_path, media_type="audio/wav", filename="reply.wav",
-                            headers={"X-Transcript": transcript["text"][:500], "X-Session-Id": session_id})
+                            headers={"X-Transcript": transcript["text"][:500], "X-Session-Id": session_id},
+                            background=BackgroundTask(os.remove, output_path))
     except HTTPException:
         raise
     except Exception as exc:
