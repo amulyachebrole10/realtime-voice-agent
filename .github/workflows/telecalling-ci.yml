@@ -1,0 +1,24 @@
+name: Telecalling prototype CI
+on:
+  push:
+    paths:
+      - "telecalling-agent/**"
+  pull_request:
+    paths:
+      - "telecalling-agent/**"
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: telecalling-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: telecalling-agent/requirements.txt
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: pytest -q
